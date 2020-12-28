@@ -105,6 +105,7 @@ process_line() {
   p_systemd_requiredby="${18}"
   p_systemd_nofail="${19}"
   p_systemd_ignore="${20}"
+  p_systemd_keyname="${21}"
 
   # Minimal pre-requisites to mount a ZFS dataset
   # By ordering before zfs-mount.service, we avoid race conditions.
@@ -157,6 +158,11 @@ process_line() {
     requiredmounts="RequiresMountsFor=${p_systemd_requiresmountsfor}"
   fi
 
+  if [ -n "${p_systemd_keyname}" ] && \
+      [ "${p_systemd_keyname}" != "-" ]; then
+    keyname="zfs:${p_systemd_keyname}"
+  fi
+
   # Handle encryption
   if [ -n "${p_encroot}" ] &&
       [ "${p_encroot}" != "-" ] ; then
@@ -171,10 +177,21 @@ process_line() {
         fi
         keyloadscript="@sbindir@/zfs load-key \"${dataset}\""
       elif [ "${p_keyloc}" = "prompt" ] ; then
+          [ -n "${keyname}" ] && \
+            displayname=$(printf "${keyname}" | cut -d ":" -f 2-) || \
+            displayname="${dataset}"
         keyloadscript="\
+systemd-ask-password\
+  --accept-cached\
+  ${keyname:+--keyname=\"${keyname}}\"\
+  --id=\"zfs:${dataset}\"\
+  \"Enter passphrase for ${dataset}:\"|\
+  @sbindir@/zfs load-key \"${dataset}\" && exit 0;\
 count=0;\
-while [ \$\$count -lt 3 ];do\
-  systemd-ask-password --id=\"zfs:${dataset}\"\
+while [ \$\$count -lt 2 ];do\
+  systemd-ask-password\
+    ${keyname:+--keyname=\"${keyname}}\"\
+    --id=\"zfs:${dataset}\"\
     \"Enter passphrase for ${dataset}:\"|\
     @sbindir@/zfs load-key \"${dataset}\" && exit 0;\
   count=\$\$((count + 1));\
@@ -219,6 +236,7 @@ ${requires}
 ${keymountdep}
 
 [Service]
+KeyringMode=shared
 Type=oneshot
 RemainAfterExit=yes
 # This avoids a dependency loop involving systemd-journald.socket if this

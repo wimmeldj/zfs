@@ -51,7 +51,8 @@ case "${ZEVENT_HISTORY_INTERNAL_NAME}" in
               org.openzfs.systemd:requires-mounts-for| \
               org.openzfs.systemd:before|org.openzfs.systemd:after| \
               org.openzfs.systemd:wanted-by|org.openzfs.systemd:required-by| \
-              org.openzfs.systemd:nofail|org.openzfs.systemd:ignore \
+              org.openzfs.systemd:nofail|org.openzfs.systemd:ignore| \
+              org.openzfs.systemd:keyname \
             ) ;;
             *) exit 0 ;;
         esac
@@ -71,7 +72,8 @@ PROPS="name,mountpoint,canmount,atime,relatime,devices,exec\
 ,org.openzfs.systemd:requires,org.openzfs.systemd:requires-mounts-for\
 ,org.openzfs.systemd:before,org.openzfs.systemd:after\
 ,org.openzfs.systemd:wanted-by,org.openzfs.systemd:required-by\
-,org.openzfs.systemd:nofail,org.openzfs.systemd:ignore"
+,org.openzfs.systemd:nofail,org.openzfs.systemd:ignore\
+,org.openzfs.systemd:keyname"
 
 "${ZFS}" list -H -t filesystem -o $PROPS -r "${ZEVENT_POOL}" > "${FSLIST_TMP}"
 

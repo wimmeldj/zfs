@@ -184,6 +184,16 @@ local-fs.target
 If set to
 .BR on ,
 do not generate a mount unit for this dataset.
+.TP 4
+.BR org.openzfs.systemd:keyname = keyname
+Encrypted datasets with a keylocation of
+.BR prompt
+can have their password cached for 2.5 minutes by
+.BR systemd.ask-password(1)
+in the root user's kernel keyring. If a password already exists in the
+cache and it is successfully loaded for a dataset, no prompt will be
+given. So multiple datasets - even those that don't share a common
+parent - can be unlocked with one password entry.
 
 .RE
 See also
